@@ -1,9 +1,27 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:github_app/github_repo.dart';
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
+Future<List<Pullrequest>> _fetchPulls(final String pulls) async {
+  final response = await http.get(pulls);
+
+  if (response.statusCode == 200) {
+    return compute(parsePullrequest, response.body);
+  } else {
+    throw Exception('Failed to load pullrequests');
+  }
+}
+
+List<Pullrequest> parsePullrequest(String response) {
+  final List items = json.decode(response);
+
+  return items.map((item) => Pullrequest.fromJSON(item)).toList();
+}
+
 
 class GithubPullrequestList extends StatelessWidget {
   static final String router = '/pullrequests';
@@ -18,29 +36,16 @@ class GithubPullrequestList extends StatelessWidget {
         ),
         body: Center(
           child: FutureBuilder(
-            future: _fetchPulls(pullrequestUrl),
+            future: _fetchPulls(sanitizePullsUrl(pullrequestUrl)),
             builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return ListView(children: _mapDTOToWidget(snapshot.data));
-              } else if (snapshot.hasError) {
-                return Text("${snapshot.error}");
-              }
-              return CircularProgressIndicator();
+              if (snapshot.hasError) return Text("${snapshot.error}");
+
+              return snapshot.hasData
+                  ? ListView(children: _mapDTOToWidget(snapshot.data))
+                  : CircularProgressIndicator();
             },
           ),
         ));
-  }
-
-  Future<List<Pullrequest>> _fetchPulls(final String pulls) async {
-    final response = await http.get(sanitizePullsUrl(pulls));
-
-    if (response.statusCode == 200) {
-      final List items = json.decode(response.body);
-
-      return items.map((item) => Pullrequest.fromJSON(item)).toList();
-    } else {
-      throw Exception('Failed to load post');
-    }
   }
 
   List<Widget> _mapDTOToWidget(final List<Pullrequest> pulls) {

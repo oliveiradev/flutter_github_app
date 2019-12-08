@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:github_app/router.dart';
@@ -5,32 +6,34 @@ import 'package:github_app/router.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+Future<List<Repo>> _fetchRepos() async {
+  final response = await http.get("https://api.github.com/repositories");
+
+  if (response.statusCode == 200) {
+    return compute(parseRepos, response.body);
+  } else {
+    throw Exception('Failed to load repositories');
+  }
+}
+
+List<Repo> parseRepos(String response) {
+  final List items = json.decode(response);
+  return items.map((item) => Repo.fromJSON(item)).toList();
+}
+
 class GithubRepoList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
       future: _fetchRepos(),
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return ListView(children: mapDTOToWidget(snapshot.data));
-        } else if (snapshot.hasError) {
-          return Text("${snapshot.error}");
-        }
-        return CircularProgressIndicator();
+        if (snapshot.hasError) return Text("${snapshot.error}");
+
+        return snapshot.hasData
+            ? ListView(children: mapDTOToWidget(snapshot.data))
+            : CircularProgressIndicator();
       },
     );
-  }
-
-  Future<List<Repo>> _fetchRepos() async {
-    final response = await http.get("https://api.github.com/repositories");
-
-    if (response.statusCode == 200) {
-      final List items = json.decode(response.body);
-
-      return items.map((item) => Repo.fromJSON(item)).toList();
-    } else {
-      throw Exception('Failed to load post');
-    }
   }
 
   List<Widget> mapDTOToWidget(List<Repo> _repo) {

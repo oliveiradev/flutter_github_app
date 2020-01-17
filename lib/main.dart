@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:github_app/github_repo.dart';
-import 'package:github_app/router.dart';
+import 'package:github_app/shared/router.dart';
+
+import 'repositories/screens/repos_screen.dart';
 
 void main() => runApp(MyApp());
 

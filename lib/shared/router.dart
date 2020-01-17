@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:github_app/github_pullrequests.dart';
+import 'package:github_app/pullrequests/screens/pullrequests_screen.dart';
 
 class Router {
 
